@@ -57,19 +57,18 @@ while rval:
     ret2,frame_th = cv2.threshold(blurB, 240, 0, cv2.THRESH_TOZERO);
 
     struct_elem = diamond(4)
-    frame_open = opening(frame_th, struct_elem)        
+    frame_open = opening(frame_th, struct_elem)
     
     # cv2.Canny(frame_open, 100, 100*3, frame_open, 3, True)
-    
     image, contours, hiearchy = cv2.findContours(frame_open.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
  
     max_area = 100
     cont_index = 0
-
+   
     if(len(contours) != 0) :    
         for i in range(len(contours)) :
             c = contours[i]
-            area = cv2.contourArea(c)
+            area = cv2.contourArea(c)            
             if(area > max_area) :
                 max_area = area
                 cont_index = i
@@ -81,9 +80,9 @@ while rval:
             centerX = int(M['m10']/M['m00'])
             centerY = int(M['m01']/M['m00'])        
                                     
-        my_moveMouse(centerX * ratioX, centerY * ratioY)
- 
-    cv2.imshow("preview", frame_open)    
+        my_moveMouse(centerX * ratioX, centerY * ratioY) 
+           
+    cv2.imshow("preview", frame_open)         
     rval, frame = vc.read()
     key = cv2.waitKey(20)
     if key == 27:  # exit on ESC
