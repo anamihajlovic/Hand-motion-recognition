@@ -22,9 +22,9 @@ i = 0
 for x in range(1):
 
     projectRoot = os.path.abspath(os.path.dirname(__file__))
-    imgPath = os.path.join(projectRoot, 'TrainSet', 'dva0.jpg')
+    #imgPath = os.path.join(projectRoot, 'TrainSet', 'dva0.jpg')
   
-    #imgPath = "C:\Users\Olivera\Desktop\TestSet\dva0.jpg"
+    imgPath = "C:\Users\Olivera\Desktop\TestSet\im7.jpg"
    
     img = imread(imgPath)
     img_gray = my_rgb2gray(img)   
@@ -57,10 +57,10 @@ for x in range(1):
     x,y,w,h = cv2.boundingRect(max_cont)        
     crop_img = img_th.copy()[y: y+h, x:x+w]
     #cv2.drawContours(img_th, contours, cont_index, (255,0,0), 5)
-    #plt.imshow(img_th, 'gray')
+    plt.imshow(img_th, 'gray')
     #plt.imshow(crop_img, 'gray')
     
-    resized_img = cv2.resize(crop_img, (50,50), interpolation = cv2.INTER_NEAREST)
-    plt.imshow(resized_img, 'gray')
+    #resized_img = cv2.resize(crop_img, (50,50), interpolation = cv2.INTER_NEAREST)
+    #plt.imshow(resized_img, 'gray')
 
      
