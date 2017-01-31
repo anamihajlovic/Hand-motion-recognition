@@ -22,8 +22,10 @@ i = 0
 for x in range(1):
 
     projectRoot = os.path.abspath(os.path.dirname(__file__))
-    imgPath = os.path.join(projectRoot, 'TrainSet', 'saka9.jpg')
+    imgPath = os.path.join(projectRoot, 'TrainSet', 'dva0.jpg')
   
+    #imgPath = "C:\Users\Olivera\Desktop\TestSet\dva0.jpg"
+   
     img = imread(imgPath)
     img_gray = my_rgb2gray(img)   
     
@@ -33,9 +35,9 @@ for x in range(1):
     struct_elem = disk(5)
     img_dil = dilation(img_th, struct_elem)        
                      
-    #deluje mi da malo prosiri beline, ali uspori program, RAZMISLITI O TOME!
-    #elem = disk(10)
-    #img_open = opening(img_dil, elem)
+    #deluje mi da malo smanji beline, ali uspori program, RAZMISLITI O TOME!
+    #elem = disk(8)
+    #img_open = closing(img_th, elem)   
 
     #findContours -> belo mu je foreground a crno background   
     image, contours, hiearchy = cv2.findContours(img_th.copy(), cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
@@ -53,8 +55,12 @@ for x in range(1):
         max_cont = contours[cont_index] 
 
     x,y,w,h = cv2.boundingRect(max_cont)        
-    crop_img = img_th[y: y+h, x:x+w]
-    #plt.imshow(img_inv, 'gray')
-    plt.imshow(crop_img, 'gray') 
+    crop_img = img_th.copy()[y: y+h, x:x+w]
+    #cv2.drawContours(img_th, contours, cont_index, (255,0,0), 5)
+    #plt.imshow(img_th, 'gray')
+    #plt.imshow(crop_img, 'gray')
+    
+    resized_img = cv2.resize(crop_img, (50,50), interpolation = cv2.INTER_NEAREST)
+    plt.imshow(resized_img, 'gray')
 
      
