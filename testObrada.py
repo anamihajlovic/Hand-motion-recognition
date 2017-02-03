@@ -7,6 +7,9 @@ from skimage.io import imread
 from skimage.morphology import disk
 from skimage.morphology import opening, closing, dilation
 import os
+from keras.models import Sequential
+from keras.layers.core import Activation, Dense
+from keras.optimizers import SGD
 #RAZMISLITI O JOS NEKIM MORFOLOSKIM OPERACIJAMA
 
 
@@ -73,11 +76,8 @@ for i in range(img_num):
     #plt.imshow(crop_img, 'gray')
     
     resized_img = cv2.resize(crop_img, (50,50), interpolation = cv2.INTER_NEAREST)
-    #plt.imshow(resized_img, 'gray')      
-    
     img_array[i, :] = resized_img.flatten()
-    #print(img_array[i,2])
-
+  
 data = np.zeros((img_num, 25), np.double)
 row_array = np.zeros((1,25), np.double)
 for i in range(img_num):        
@@ -87,3 +87,16 @@ for i in range(img_num):
     data[i, :] = row_array
 
 trainOut = createTrainOut(img_num, len(gestures))
+
+#model neurnoske mreze
+model = Sequential()
+model.add(Dense(10, input_dim=25))
+model.add(Activation('sigmoid'))
+model.add(Dense(len(gestures)))
+model.add(Activation('sigmoid'))
+
+sgd = SGD(lr=0.1, decay=0.00001, momentum=0.7)
+model.compile(loss='mean_squared_error', optimizer=sgd)
+
+training = model.fit(data, trainOut, nb_epoch=5000, batch_size=20, verbose=0)
+print training.history['loss'][-1]
