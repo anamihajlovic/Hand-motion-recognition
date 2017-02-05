@@ -10,7 +10,9 @@ import os
 from keras.models import Sequential
 from keras.layers.core import Activation, Dense
 from keras.optimizers import SGD
+from keras.models import model_from_json
 #RAZMISLITI O JOS NEKIM MORFOLOSKIM OPERACIJAMA
+
 
 
 #pretvori u sivo
@@ -31,6 +33,7 @@ def createTrainOut(row_num, gest_num):
 
 gestures = ['two', 'three', 'thumb', 'fist']
 labels = np.arange(0, len(gestures))
+
 
 img_num = 61
 img_array =  np.zeros((img_num, 50*50), np.uint8)
@@ -96,7 +99,33 @@ model.add(Dense(len(gestures)))
 model.add(Activation('sigmoid'))
 
 sgd = SGD(lr=0.1, decay=0.00001, momentum=0.7)
-model.compile(loss='mean_squared_error', optimizer=sgd)
+model.compile(loss='mean_squared_error', optimizer=sgd, metrics=['accuracy'])
 
 training = model.fit(data, trainOut, nb_epoch=5000, batch_size=20, verbose=0)
 print training.history['loss'][-1]
+
+# evaluacija modela
+scores = model.evaluate(data, trainOut, verbose=0)
+print("%s: %.2f%%" % (model.metrics_names[1], scores[1]*100))
+
+# cuvanje modela u json fajl
+model_json = model.to_json()
+with open("model.json", "w") as json_file:
+    json_file.write(model_json)
+# cuvanje tezina u HDF5 fajl
+model.save_weights("model.h5")
+print("Model je sacuvan u fajl")
+
+# ucitavanje modela iz fajla i njegovo kreiranje
+json_file = open('model.json', 'r')
+loaded_model_json = json_file.read()
+json_file.close()
+loaded_model = model_from_json(loaded_model_json)
+# ucitavanje tezina u kreirani model
+loaded_model.load_weights("model.h5")
+print("Ucitan model iz fajla")
+
+# evaluacija ucitanog modela
+loaded_model.compile(loss='mean_squared_error', optimizer=sgd, metrics=['accuracy'])
+score = loaded_model.evaluate(data, trainOut, verbose=0)
+print "%s: %.2f%%" % (loaded_model.metrics_names[1], score[1]*100)
