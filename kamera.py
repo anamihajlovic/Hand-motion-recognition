@@ -11,7 +11,15 @@ import numpy as np
 import math
 from skimage.morphology import diamond
 from skimage.morphology import opening, closing
-import win32api, win32con
+import win32api
+from testObrada import readModel
+import matplotlib.pyplot as plt
+from keras.models import Sequential
+from keras.layers.core import Activation, Dense
+from keras.optimizers import SGD
+from keras.models import model_from_json
+
+
 
 
 #vraca se redosled boja BGR
@@ -30,11 +38,35 @@ def my_moveMouse(newX, newY):
     
     win32api.SetCursorPos((currentX + x, currentY + y))
    
+#frame sa kamere se obradjuje tako da se moze poslati kao ulaz u neuronsku mrezu
+def createInputImage(frame, max_cont) :
+    x,y,w,h = cv2.boundingRect(max_cont)        
+    crop_img = frame.copy()[y: y+h, x:x+w]
+    resized_frame = cv2.resize(crop_img, (50,50), interpolation = cv2.INTER_NEAREST)      
+    
+    plt.imshow(resized_frame, 'gray')
+    img_array[0, :] = resized_frame.flatten()
+    img_array[img_array > 0] = 10
+    print(img_array)
+    data = np.zeros((1, 25), np.double)     
+    for k in range(25):
+        data[0, k] = np.mean(img_array[0, k*100:100*(k+1)])
+    
+    return data
+
+def my_Predict(model, img):    
+    
+    t = model.predict(img, verbose = 1)
+    result = t.argmax(axis=1)
+    print t[0][result], result[0]
+
 
 cv2.namedWindow("preview")
 vc = cv2.VideoCapture(0)
 
-win32api.SetCursorPos(( win32api.GetSystemMetrics (0) / 2, win32api.GetSystemMetrics (1) / 2))
+loaded_model = readModel()    
+#win32api.SetCursorPos(( win32api.GetSystemMetrics (0) / 2, win32api.GetSystemMetrics (1) / 2))
+img_array =  np.zeros((1, 50*50), np.uint8)
 
 if vc.isOpened():  # try to get the first frame
     rval, frame = vc.read()     
@@ -54,7 +86,7 @@ while rval:
     frame_gray = my_rgb2gray(frame)
              
     blurB = cv2.bilateralFilter(frame_gray,9,150,150)    
-    ret2,frame_th = cv2.threshold(blurB, 240, 0, cv2.THRESH_TOZERO);
+    ret2,frame_th = cv2.threshold(blurB, 250, 0, cv2.THRESH_TOZERO);
 
     struct_elem = diamond(4)
     frame_open = opening(frame_th, struct_elem)
@@ -80,13 +112,22 @@ while rval:
             centerX = int(M['m10']/M['m00'])
             centerY = int(M['m01']/M['m00'])        
                                     
-        my_moveMouse(centerX * ratioX, centerY * ratioY) 
+        #my_moveMouse(centerX * ratioX, centerY * ratioY)  
            
     cv2.imshow("preview", frame_open)         
     rval, frame = vc.read()
     key = cv2.waitKey(20)
     if key == 27:  # exit on ESC
         break
+    
+    if key == 32:         
+        print("Poceo sam")                       
+        img_input = createInputImage(frame_open, max_cont)        
+        t = loaded_model.predict(img_input, verbose = 1)
+        result = t.argmax(axis=1)
+        print t[0][result], result[0]
+        #my_Predict(loaded_model, img_input)
+        
     
 vc.release()
 cv2.destroyWindow("preview")
