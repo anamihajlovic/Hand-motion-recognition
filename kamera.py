@@ -14,12 +14,6 @@ from skimage.morphology import opening, closing
 import win32api
 from testObrada import readModel
 import matplotlib.pyplot as plt
-from keras.models import Sequential
-from keras.layers.core import Activation, Dense
-from keras.optimizers import SGD
-from keras.models import model_from_json
-
-
 
 
 #vraca se redosled boja BGR
@@ -44,19 +38,17 @@ def createInputImage(frame, max_cont) :
     crop_img = frame.copy()[y: y+h, x:x+w]
     resized_frame = cv2.resize(crop_img, (50,50), interpolation = cv2.INTER_NEAREST)      
     
-    plt.imshow(resized_frame, 'gray')
+    #plt.imshow(resized_frame, 'gray')
     img_array[0, :] = resized_frame.flatten()
     img_array[img_array > 0] = 10
     print(img_array)
     data = np.zeros((1, 25), np.double)     
     for k in range(25):
-        data[0, k] = np.mean(img_array[0, k*100:100*(k+1)])
-    
+        data[0, k] = np.mean(img_array[0, k*100:100*(k+1)])    
     return data
 
-def my_Predict(model, img):    
-    
-    t = model.predict(img, verbose = 1)
+def my_Predict(model, img):        
+    t = loaded_model.predict(img_input, verbose = 1)
     result = t.argmax(axis=1)
     print t[0][result], result[0]
 
@@ -122,11 +114,8 @@ while rval:
     
     if key == 32:         
         print("Poceo sam")                       
-        img_input = createInputImage(frame_open, max_cont)        
-        t = loaded_model.predict(img_input, verbose = 1)
-        result = t.argmax(axis=1)
-        print t[0][result], result[0]
-        #my_Predict(loaded_model, img_input)
+        img_input = createInputImage(frame_open, max_cont)               
+        my_Predict(loaded_model, img_input)
         
     
 vc.release()

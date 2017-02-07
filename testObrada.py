@@ -21,6 +21,7 @@ def my_rgb2gray(img_rgb):
     img_gray = img_gray.astype('uint8')  # u prethodnom koraku smo mnozili sa float, pa sada moramo da vratimo u [0,255] opseg
     return img_gray    
     
+#kreiranje skupa izlaza iz neuronske mreze
 def createTrainOut(row_num, gest_num):
     trainOut = np.zeros((row_num, gest_num), np.uint8)
     trainOut[:17, 0] = 1
@@ -28,6 +29,33 @@ def createTrainOut(row_num, gest_num):
     trainOut[31:45, 3] = 1
     trainOut[45:61, 1] = 1
     return trainOut
+
+#kreiranje modela neuronske mreze i cuvanje u fajl
+def createModel(data, trainOut, gestures):    
+    model = Sequential()
+    model.add(Dense(10, input_dim=25))
+    model.add(Activation('sigmoid'))
+    model.add(Dense(len(gestures)))
+    model.add(Activation('sigmoid'))
+
+    sgd = SGD(lr=0.1, decay=0.00001, momentum=0.7)
+    model.compile(loss='mean_squared_error', optimizer=sgd, metrics=['accuracy'])
+
+    training = model.fit(data, trainOut, nb_epoch=5000, batch_size=20, verbose=0)
+    print training.history['loss'][-1]
+
+    # evaluacija modela
+    scores = model.evaluate(data, trainOut, verbose=0)
+    print("%s: %.2f%%" % (model.metrics_names[1], scores[1]*100))
+
+    # cuvanje modela u json fajl
+    model_json = model.to_json()
+    with open("model.json", "w") as json_file:
+        json_file.write(model_json)
+    # cuvanje tezina u HDF5 fajl
+    model.save_weights("model.h5")
+    print("Model je sacuvan u fajl")
+
 
 # ucitavanje modela iz fajla i njegovo kreiranje
 def readModel():   
@@ -55,8 +83,7 @@ def glavnaFja():
     for i in range(img_num):
 
         projectRoot = os.path.abspath(os.path.dirname(__file__))
-        imgPath = os.path.join(projectRoot, 'TrainSet', 'img' +  str(i) + '.jpg')
-  
+        imgPath = os.path.join(projectRoot, 'TrainSet', 'img' +  str(i) + '.jpg')  
         #imgPath = "C:\Users\Olivera\Desktop\TestSet\im7.jpg"
    
         img = imread(imgPath)
@@ -104,31 +131,5 @@ def glavnaFja():
         
         data[i, :] = row_array
 
-    trainOut = createTrainOut(img_num, len(gestures))
-
-def createModel(data, trainOut, gestures):
-    #model neurnoske mreze
-    model = Sequential()
-    model.add(Dense(10, input_dim=25))
-    model.add(Activation('sigmoid'))
-    model.add(Dense(len(gestures)))
-    model.add(Activation('sigmoid'))
-
-    sgd = SGD(lr=0.1, decay=0.00001, momentum=0.7)
-    model.compile(loss='mean_squared_error', optimizer=sgd, metrics=['accuracy'])
-
-    training = model.fit(data, trainOut, nb_epoch=5000, batch_size=20, verbose=0)
-    print training.history['loss'][-1]
-
-    # evaluacija modela
-    scores = model.evaluate(data, trainOut, verbose=0)
-    print("%s: %.2f%%" % (model.metrics_names[1], scores[1]*100))
-
-    # cuvanje modela u json fajl
-    model_json = model.to_json()
-    with open("model.json", "w") as json_file:
-        json_file.write(model_json)
-    # cuvanje tezina u HDF5 fajl
-    model.save_weights("model.h5")
-    print("Model je sacuvan u fajl")
-
+    trainOut = createTrainOut(img_num, len(gestures))    
+    createModel(data, trainOut, gestures)
