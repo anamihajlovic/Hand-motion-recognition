@@ -9,8 +9,8 @@ Created on Fri Jan 20 11:26:45 2017
 import cv2
 import numpy as np
 import math
-from skimage.morphology import diamond
-from skimage.morphology import opening, closing
+from skimage.morphology import diamond, square, disk
+from skimage.morphology import opening, closing, dilation, erosion
 import win32api
 from testObrada import readModel
 import matplotlib.pyplot as plt
@@ -23,11 +23,12 @@ def my_rgb2gray(frame_rgb):
     frame_gray = frame_gray.astype('uint8')  # u prethodnom koraku smo mnozili sa float, pa sada moramo da vratimo u [0,255] opseg
     return frame_gray
 
+#obrda frejma uz pomoc hsv color modela
 def my_rgb2hsv(frame_rgb):
     frame_hsv = cv2.cvtColor(frame_rgb, cv2.COLOR_BGR2HSV)
     
-    lower_pink = np.array([150, 70, 70])
-    upper_pink = np.array([170, 255, 255])
+    lower_pink = np.array([140, 20, 20])
+    upper_pink = np.array([175, 255, 255])
     
     mask = cv2.inRange(frame_hsv, lower_pink, upper_pink)
     
@@ -93,8 +94,12 @@ while rval:
     struct_elem = diamond(4)
     frame_open = opening(frame_th, struct_elem)
     
+  
     proba = my_rgb2hsv(frame)
-    proba_close = opening(proba, struct_elem)
+    proba_er = erosion(proba, disk(8))
+    proba_open = dilation(proba_er, diamond(5))
+    
+    #proba_open = opening(proba, disk(4))
     
     # cv2.Canny(frame_open, 100, 100*3, frame_open, 3, True)
     image, contours, hiearchy = cv2.findContours(frame_open.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
@@ -119,7 +124,7 @@ while rval:
                                     
         #my_moveMouse(centerX * ratioX, centerY * ratioY)  
            
-    cv2.imshow("preview", proba_close)         
+    cv2.imshow("preview", proba_open)         
     rval, frame = vc.read()
     key = cv2.waitKey(20)
     if key == 27:  # exit on ESC
