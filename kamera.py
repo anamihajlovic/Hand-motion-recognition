@@ -23,6 +23,16 @@ def my_rgb2gray(frame_rgb):
     frame_gray = frame_gray.astype('uint8')  # u prethodnom koraku smo mnozili sa float, pa sada moramo da vratimo u [0,255] opseg
     return frame_gray
 
+def my_rgb2hsv(frame_rgb):
+    frame_hsv = cv2.cvtColor(frame_rgb, cv2.COLOR_BGR2HSV)
+    
+    lower_pink = np.array([150, 70, 70])
+    upper_pink = np.array([170, 255, 255])
+    
+    mask = cv2.inRange(frame_hsv, lower_pink, upper_pink)
+    
+    return mask
+
 #podesava se pozicija kursora misa
 def my_moveMouse(newX, newY):    
     currentX, currentY = win32api.GetCursorPos()  
@@ -83,6 +93,9 @@ while rval:
     struct_elem = diamond(4)
     frame_open = opening(frame_th, struct_elem)
     
+    proba = my_rgb2hsv(frame)
+    proba_close = opening(proba, struct_elem)
+    
     # cv2.Canny(frame_open, 100, 100*3, frame_open, 3, True)
     image, contours, hiearchy = cv2.findContours(frame_open.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
  
@@ -106,7 +119,7 @@ while rval:
                                     
         #my_moveMouse(centerX * ratioX, centerY * ratioY)  
            
-    cv2.imshow("preview", frame_open)         
+    cv2.imshow("preview", proba_close)         
     rval, frame = vc.read()
     key = cv2.waitKey(20)
     if key == 27:  # exit on ESC
