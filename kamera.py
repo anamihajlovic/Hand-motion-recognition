@@ -27,8 +27,8 @@ def my_rgb2gray(frame_rgb):
 def my_rgb2hsv(frame_rgb):
     frame_hsv = cv2.cvtColor(frame_rgb, cv2.COLOR_BGR2HSV)
     
-    lower_pink = np.array([140, 20, 20])
-    upper_pink = np.array([175, 255, 255])
+    lower_pink = np.array([130, 100, 100])
+    upper_pink = np.array([170, 255, 255])
     
     mask = cv2.inRange(frame_hsv, lower_pink, upper_pink)
     
@@ -67,7 +67,7 @@ def my_Predict(model, img):
 cv2.namedWindow("preview")
 vc = cv2.VideoCapture(0)
 
-loaded_model = readModel()    
+loaded_model = readModel()   
 #win32api.SetCursorPos(( win32api.GetSystemMetrics (0) / 2, win32api.GetSystemMetrics (1) / 2))
 img_array =  np.zeros((1, 50*50), np.uint8)
 
@@ -93,11 +93,10 @@ while rval:
 
     struct_elem = diamond(4)
     frame_open = opening(frame_th, struct_elem)
-    
-  
+      
     proba = my_rgb2hsv(frame)
-    proba_er = erosion(proba, disk(8))
-    proba_open = dilation(proba_er, diamond(5))
+    proba_er = erosion(proba, disk(4))
+    proba_open = dilation(proba_er, diamond(2))
     
     #proba_open = opening(proba, disk(4))
     
@@ -124,7 +123,7 @@ while rval:
                                     
         #my_moveMouse(centerX * ratioX, centerY * ratioY)  
            
-    cv2.imshow("preview", proba_open)         
+    cv2.imshow("preview", frame_open)         
     rval, frame = vc.read()
     key = cv2.waitKey(20)
     if key == 27:  # exit on ESC

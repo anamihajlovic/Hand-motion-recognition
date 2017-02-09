@@ -30,7 +30,7 @@ def createTrainOut(row_num, gest_num):
     trainOut[45:61, 1] = 1
     return trainOut
 
-#kreiranje modela neuronske mreze i cuvanje u fajl
+#kreiranje modela neuronske mreze (bez skrivenih slojeva) i cuvanje u fajl
 def createModel(data, trainOut, gestures):    
     model = Sequential()
     model.add(Dense(10, input_dim=25))
@@ -56,15 +56,70 @@ def createModel(data, trainOut, gestures):
     model.save_weights("model.h5")
     print("Model je sacuvan u fajl")
 
+#kreiranje modela neuronske mreze (sa jednim skrivenim slojem) i cuvanje u fajl
+def createModel2(data, trainOut, gestures):    
+    model = Sequential()
+    model.add(Dense(15, input_dim=25))
+    model.add(Activation('sigmoid'))
+    model.add(Dense(10, input_dim = 15))
+    model.add(Activation('sigmoid'))
+    model.add(Dense(len(gestures)))
+    model.add(Activation('sigmoid'))
+
+    sgd = SGD(lr=0.1, decay=0.00001, momentum=0.7)
+    model.compile(loss='mean_squared_error', optimizer=sgd, metrics=['accuracy'])
+
+    training = model.fit(data, trainOut, nb_epoch=5000, batch_size=20, verbose=0)
+    print training.history['loss'][-1]
+
+    # evaluacija modela
+    scores = model.evaluate(data, trainOut, verbose=0)
+    print("%s: %.2f%%" % (model.metrics_names[1], scores[1]*100))
+
+    # cuvanje modela u json fajl
+    model_json = model.to_json()
+    with open("model2.json", "w") as json_file:
+        json_file.write(model_json)
+    # cuvanje tezina u HDF5 fajl
+    model.save_weights("model2.h5")
+    print("Model je sacuvan u fajl")
+    
+#kreiranje modela neuronske mreze (sa jednim skrivenim slojem), promenjene su vrednosti sgd i cuvanje u fajl
+def createModel3(data, trainOut, gestures):    
+    model = Sequential()
+    model.add(Dense(15, input_dim=25))
+    model.add(Activation('sigmoid'))
+    model.add(Dense(10, input_dim = 15))
+    model.add(Activation('sigmoid'))
+    model.add(Dense(len(gestures)))
+    model.add(Activation('sigmoid'))
+
+    sgd = SGD(lr=0.1, decay=0.000001, momentum=0.5)
+    model.compile(loss='mean_squared_error', optimizer=sgd, metrics=['accuracy'])
+
+    training = model.fit(data, trainOut, nb_epoch=5000, batch_size=20, verbose=0)
+    print training.history['loss'][-1]
+
+    # evaluacija modela
+    scores = model.evaluate(data, trainOut, verbose=0)
+    print("%s: %.2f%%" % (model.metrics_names[1], scores[1]*100))
+
+    # cuvanje modela u json fajl
+    model_json = model.to_json()
+    with open("model3.json", "w") as json_file:
+        json_file.write(model_json)
+    # cuvanje tezina u HDF5 fajl
+    model.save_weights("model3.h5")
+    print("Model je sacuvan u fajl")
 
 # ucitavanje modela iz fajla i njegovo kreiranje
 def readModel():   
-    json_file = open('model.json', 'r')
+    json_file = open('model3.json', 'r')
     loaded_model_json = json_file.read()
     json_file.close()
     loaded_model = model_from_json(loaded_model_json)
     # ucitavanje tezina u kreirani model
-    loaded_model.load_weights("model.h5")
+    loaded_model.load_weights("model3.h5")
     print("Ucitan model iz fajla")
 
     # evaluacija ucitanog modela
@@ -74,7 +129,8 @@ def readModel():
    # print "%s: %.2f%%" % (loaded_model.metrics_names[1], score[1]*100)
     return loaded_model
 
-def glavnaFja():
+#obrada slika iz train seta za slanje neuronskoj mrezi
+def mainFunction():
     gestures = ['two', 'three', 'thumb', 'fist']
     labels = np.arange(0, len(gestures))
 
@@ -93,14 +149,14 @@ def glavnaFja():
         ret1,img_th = cv2.threshold(blurB, 110, 10, cv2.ADAPTIVE_THRESH_MEAN_C+cv2.THRESH_BINARY_INV);       
 
         struct_elem = disk(5)
-        img_dil = dilation(img_th, struct_elem)        
-                     
+        img_open = opening(img_th, struct_elem)        
+      
         #deluje mi da malo smanji beline, ali uspori program, RAZMISLITI O TOME!
         #elem = disk(8)
         #img_open = closing(img_th, elem)   
 
         #findContours -> belo mu je foreground a crno background   
-        image, contours, hiearchy = cv2.findContours(img_th.copy(), cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+        image, contours, hiearchy = cv2.findContours(img_open.copy(), cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
     
         max_area = 2000
         cont_index = 0        
@@ -115,7 +171,7 @@ def glavnaFja():
                 max_cont = contours[cont_index] 
 
         x,y,w,h = cv2.boundingRect(max_cont)        
-        crop_img = img_th.copy()[y: y+h, x:x+w]
+        crop_img = img_open.copy()[y: y+h, x:x+w]
         #cv2.drawContours(img_th, contours, cont_index, (255,0,0), 5)
         #plt.imshow(img_th, 'gray')
         #plt.imshow(crop_img, 'gray')
@@ -132,4 +188,6 @@ def glavnaFja():
         data[i, :] = row_array
 
     trainOut = createTrainOut(img_num, len(gestures))    
-    createModel(data, trainOut, gestures)
+    #createModel(data, trainOut, gestures)
+    createModel3(data, trainOut, gestures)
+
