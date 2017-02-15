@@ -62,24 +62,67 @@ def my_Predict(model, img):
     result = t.argmax(axis=1)
     print t[0][result], result[0]
 
-def compareFrames(oldFrame, newFrame):
-    num_old = findDefectHulls(oldFrame)
-    num_new = findDefectHulls(newFrame)
+
+def compareFrames(oldContour, newContour):    
+    num_old = countFingers(oldContour)
+    num_new = countFingers(newContour)
+    
     print("cmp")
     print(num_old)
     print(num_new)
+    
+    #return num_old == num_new
+    
+#funckija koja broji prste na frejmu
+def countFingers(frame_cnt):
+    finger_count = 0                    
+    hulls = cv2.convexHull(max_cont,returnPoints = True)              
+    big_distance, small_distance = calculateDistance(hulls)
+ 
+    k = 0               
+    for k in range(hulls.shape[0]): 
+         if(k == hulls.shape[0]-1):            
+             x1, y1 = hulls[k-2,0]
+             x2, y2 = hulls[k-1,0]
+                
+             hull_distance = math.sqrt((x2-x1)*(x2-x1) + (y2-y1)*(y2-y1))          
+                                      
+             if(hull_distance > small_distance and y1 <= (centerY+30)):    
+                 finger_count += 1
+                 hull_tuple = tuple(hulls[k][0])                                   
+                 cv2.circle(frame_open,hull_tuple,10,[255,0,0],0)   
+                                        
+         else :            
+             x1, y1 = hulls[k,0]
+             x2, y2 = hulls[k+1,0]                  
+                        
+             hull_distance = math.sqrt((x2-x1)*(x2-x1) + (y2-y1)*(y2-y1))          
+                                      
+             if(hull_distance > big_distance and y1 <= (centerY+30)):    
+                 finger_count += 1
+                 hull_tuple = tuple(hulls[k][0])                                   
+                 cv2.circle(frame_open,hull_tuple,10,[255,0,0],0)   
+             
+    return finger_count
+    
 
-def findDefectHulls(frame_cnt, frame):
-    hulls = cv2.convexHull(frame_cnt,returnPoints = False)
-    defects = cv2.convexityDefects(frame_cnt,hulls)
-    
-    hull = np.array(hulls).reshape((-1,1,2)).astype(np.int32)
-    cv2.drawContours(frame,hull,0,(0,0,255),2)
-    plt.imshow(frame, 'gray')
-    print(len(hull))
-   
-    
-    
+def calculateDistance(hulls):
+    max_center_distance = -1
+    k = 0
+    for k in range(hulls.shape[0]): 
+        x1, y1 = hulls[k,0]
+        
+    #udaljenost tacke od centra sake
+        center_distance = math.sqrt((centerX-x1)*(centerX-x1) + (centerY-y1)*(centerY-y1))
+        if(center_distance > max_center_distance):
+            max_center_distance = center_distance           
+             
+    big_distance = math.ceil(max_center_distance / 7)  
+    small_distance = math.ceil(max_center_distance / 14)   
+         
+    return big_distance, small_distance    
+
+
 cv2.namedWindow("preview")
 vc = cv2.VideoCapture(0)
 
@@ -142,11 +185,11 @@ while rval:
                                     
         #my_moveMouse(centerX * ratioX, centerY * ratioY)  
         
-        if (frame_counter == 1):
-            old_frame_cnt = max_cont
+        if (frame_counter == 15):            
+            old_frame_cnt = max_cont              
             
-        if(frame_counter == 15):
-            #compareFrames(old_frame_cnt, max_cont)
+        elif(frame_counter == 30):                          
+            compareFrames(old_frame_cnt, max_cont)
             frame_counter = 0
             old_frame_cnt = max_cont
        
@@ -157,42 +200,10 @@ while rval:
     key = cv2.waitKey(20)
     if key == 27:  # exit on ESC
         break    
-    if key == 32:         
-        print("Poceo sam")                       
-        #findDefectHulls(max_cont, frame_open)
-        hulls = cv2.convexHull(max_cont,returnPoints = True)        
-        #hulls = cv2.convexHull(max_cont,returnPoints = False)
-        #defects = cv2.convexityDefects(max_cont,hulls)
-        print(centerX)
-        print(centerY)
-        
-        k = 0            
-        for k in range(hulls.shape[0]): 
-            if(k == hulls.shape[0]-1):
-                x1, y1 = hulls[k-1,0]
-                x2, y2 = hulls[k,0]
-                            
-            else :            
-                x1, y1 = hulls[k,0]
-                x2, y2 = hulls[k+1,0]   
-                
-            #dist = sqrt((x2-x1)^2 + (y2-y1)^2)
-            distance = math.sqrt((x2-x1)*(x2-x1) + (y2-y1)*(y2-y1))
-            center_distance = math.sqrt((centerX-x1)*(centerX-x1) + (centerY-y1)*(centerY-y1))
-            
-            
-               
-            #hull_tuple = tuple(hulls[k][0])
-            #hull_tuple2 = tuple(hulls[k+1][0])                               
-            if(distance > 50):                
-                hull_tuple = tuple(hulls[k][0])                                   
-                cv2.circle(frame_open,hull_tuple,10,[255,0,0],0)    
-            
-       
-        #druga ideja, gledaj udaljenost svake tacke od centra
-            
-        plt.imshow(frame_open)
-       # print(len(defects))
+    if key == 32:          
+        print("Poceo sam")   
+        #countFingers(max_cont, frame_open)                  
+       #print(len(defects))
         #img_input = createInputImage(frame_open, max_cont)               
         #my_Predict(loaded_model, img_input)
         
