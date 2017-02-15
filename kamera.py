@@ -16,6 +16,7 @@ from testObrada import readModel
 import matplotlib.pyplot as plt
 
 
+
 #vraca se redosled boja BGR
 def my_rgb2gray(frame_rgb):
     frame_gray = np.ndarray((frame_rgb.shape[0], frame_rgb.shape[1]))  # zauzimanje memorije za sliku (nema trece dimenzije)    
@@ -48,11 +49,9 @@ def createInputImage(frame, max_cont) :
     x,y,w,h = cv2.boundingRect(max_cont)        
     crop_img = frame.copy()[y: y+h, x:x+w]
     resized_frame = cv2.resize(crop_img, (50,50), interpolation = cv2.INTER_NEAREST)      
-    
-    #plt.imshow(resized_frame, 'gray')
+ 
     img_array[0, :] = resized_frame.flatten()
-    img_array[img_array > 0] = 10
-    print(img_array)
+    img_array[img_array > 0] = 10   
     data = np.zeros((1, 25), np.double)     
     for k in range(25):
         data[0, k] = np.mean(img_array[0, k*100:100*(k+1)])    
@@ -63,7 +62,24 @@ def my_Predict(model, img):
     result = t.argmax(axis=1)
     print t[0][result], result[0]
 
+def compareFrames(oldFrame, newFrame):
+    num_old = findDefectHulls(oldFrame)
+    num_new = findDefectHulls(newFrame)
+    print("cmp")
+    print(num_old)
+    print(num_new)
 
+def findDefectHulls(frame_cnt, frame):
+    hulls = cv2.convexHull(frame_cnt,returnPoints = False)
+    defects = cv2.convexityDefects(frame_cnt,hulls)
+    
+    hull = np.array(hulls).reshape((-1,1,2)).astype(np.int32)
+    cv2.drawContours(frame,hull,0,(0,0,255),2)
+    plt.imshow(frame, 'gray')
+    print(len(hull))
+   
+    
+    
 cv2.namedWindow("preview")
 vc = cv2.VideoCapture(0)
 
@@ -71,20 +87,23 @@ loaded_model = readModel()
 #win32api.SetCursorPos(( win32api.GetSystemMetrics (0) / 2, win32api.GetSystemMetrics (1) / 2))
 img_array =  np.zeros((1, 50*50), np.uint8)
 
+frame_counter = 0
+
 if vc.isOpened():  # try to get the first frame
-    rval, frame = vc.read()     
+    rval, frame = vc.read() 
+    frame_counter += 1    
     
     frame_width = vc.get(cv2.CAP_PROP_FRAME_WIDTH)
     frame_height = vc.get(cv2.CAP_PROP_FRAME_HEIGHT)
 
     if(frame_width != 0 and frame_height != 0) :
         ratioX = (int) (math.ceil(win32api.GetSystemMetrics (0) / frame_width))        
-        ratioY = (int) (math.ceil(win32api.GetSystemMetrics (1) / frame_height))
+        ratioY = (int) (math.ceil(win32api.GetSystemMetrics (1) / frame_height))               
     
 else:
     rval = False
 
-while rval:
+while rval:      
     gray = cv2.cvtColor(frame,cv2.COLOR_BGR2GRAY)
     frame_gray = my_rgb2gray(frame)
              
@@ -105,7 +124,7 @@ while rval:
  
     max_area = 100
     cont_index = 0
-   
+    
     if(len(contours) != 0) :    
         for i in range(len(contours)) :
             c = contours[i]
@@ -122,17 +141,60 @@ while rval:
             centerY = int(M['m01']/M['m00'])        
                                     
         #my_moveMouse(centerX * ratioX, centerY * ratioY)  
-           
+        
+        if (frame_counter == 1):
+            old_frame_cnt = max_cont
+            
+        if(frame_counter == 15):
+            #compareFrames(old_frame_cnt, max_cont)
+            frame_counter = 0
+            old_frame_cnt = max_cont
+       
     cv2.imshow("preview", frame_open)         
-    rval, frame = vc.read()
+    rval, frame = vc.read()   
+    frame_counter += 1
+ 
     key = cv2.waitKey(20)
     if key == 27:  # exit on ESC
-        break
-    
+        break    
     if key == 32:         
         print("Poceo sam")                       
-        img_input = createInputImage(frame_open, max_cont)               
-        my_Predict(loaded_model, img_input)
+        #findDefectHulls(max_cont, frame_open)
+        hulls = cv2.convexHull(max_cont,returnPoints = True)        
+        #hulls = cv2.convexHull(max_cont,returnPoints = False)
+        #defects = cv2.convexityDefects(max_cont,hulls)
+        print(centerX)
+        print(centerY)
+        
+        k = 0            
+        for k in range(hulls.shape[0]): 
+            if(k == hulls.shape[0]-1):
+                x1, y1 = hulls[k-1,0]
+                x2, y2 = hulls[k,0]
+                            
+            else :            
+                x1, y1 = hulls[k,0]
+                x2, y2 = hulls[k+1,0]   
+                
+            #dist = sqrt((x2-x1)^2 + (y2-y1)^2)
+            distance = math.sqrt((x2-x1)*(x2-x1) + (y2-y1)*(y2-y1))
+            center_distance = math.sqrt((centerX-x1)*(centerX-x1) + (centerY-y1)*(centerY-y1))
+            
+            
+               
+            #hull_tuple = tuple(hulls[k][0])
+            #hull_tuple2 = tuple(hulls[k+1][0])                               
+            if(distance > 50):                
+                hull_tuple = tuple(hulls[k][0])                                   
+                cv2.circle(frame_open,hull_tuple,10,[255,0,0],0)    
+            
+       
+        #druga ideja, gledaj udaljenost svake tacke od centra
+            
+        plt.imshow(frame_open)
+       # print(len(defects))
+        #img_input = createInputImage(frame_open, max_cont)               
+        #my_Predict(loaded_model, img_input)
         
     
 vc.release()
