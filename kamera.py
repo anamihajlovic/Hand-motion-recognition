@@ -71,21 +71,25 @@ def compareNumOfFingers(old_num, new_num):
 #funckija koja broji prste na frejmu
 def countFingers(frame_cnt):
     finger_count = 0                    
-    hulls = cv2.convexHull(max_cont,returnPoints = True)              
-    big_distance, small_distance = calculateDistance(hulls)
+    hulls = cv2.convexHull(max_cont,returnPoints = True) 
+   
+    max_distance = findMaxCenterDistance(hulls)
+    big_distance = math.ceil(max_distance / 7)  
+    small_distance = math.ceil(max_distance / 16)      
  
     k = 0               
     for k in range(hulls.shape[0]): 
          if(k == hulls.shape[0]-1):            
-             x1, y1 = hulls[k-2,0]
-             x2, y2 = hulls[k-1,0]
+             x1, y1 = hulls[k-1,0]
+             x2, y2 = hulls[k,0]
                 
              hull_distance = math.sqrt((x2-x1)*(x2-x1) + (y2-y1)*(y2-y1))          
                                       
-             if(hull_distance > small_distance and y1 <= (centerY+30)):    
-                 finger_count += 1
-                 hull_tuple = tuple(hulls[k][0])                                   
-                 cv2.circle(frame_open,hull_tuple,10,[255,0,0],0)   
+             if(hull_distance > small_distance and y1 <= centerY):
+                 if(checkCenterPosition(x1, y1, max_distance)):
+                     finger_count += 1
+                     hull_tuple = tuple(hulls[k][0])                                   
+                     cv2.circle(frame_open,hull_tuple,10,[255,0,0],0)   
                                         
          else :            
              x1, y1 = hulls[k,0]
@@ -93,15 +97,16 @@ def countFingers(frame_cnt):
                         
              hull_distance = math.sqrt((x2-x1)*(x2-x1) + (y2-y1)*(y2-y1))          
                                       
-             if(hull_distance > big_distance and y1 <= (centerY+30)):    
-                 finger_count += 1
-                 hull_tuple = tuple(hulls[k][0])                                   
-                 cv2.circle(frame_open,hull_tuple,10,[255,0,0],0)   
+             if(hull_distance > big_distance and y1 <= centerY):  
+                 if(checkCenterPosition(x1, y1, max_distance)):
+                     finger_count += 1
+                     hull_tuple = tuple(hulls[k][0])                                   
+                     cv2.circle(frame_open,hull_tuple,10,[255,0,0],0)                  
              
     return finger_count
-    
 
-def calculateDistance(hulls):
+#vraca se najvece rastojanje ispupcenja od centra konture
+def findMaxCenterDistance(hulls):
     max_center_distance = -1
     k = 0
     for k in range(hulls.shape[0]): 
@@ -110,12 +115,32 @@ def calculateDistance(hulls):
     #udaljenost tacke od centra sake
         center_distance = math.sqrt((centerX-x1)*(centerX-x1) + (centerY-y1)*(centerY-y1))
         if(center_distance > max_center_distance):
-            max_center_distance = center_distance           
-             
-    big_distance = math.ceil(max_center_distance / 7)  
-    small_distance = math.ceil(max_center_distance / 14)   
-         
-    return big_distance, small_distance    
+            max_center_distance = center_distance  
+     
+    print("distance" + str(max_center_distance)) 
+    return max_center_distance
+
+
+
+#funkcija koja gleda poziciju pronadjenih tacaka, ukoliko nije odgovarajuca potrebno je preskociti tacku
+def checkCenterPosition(x1, y1, max_distance):
+    
+    #if(max_distance >= 200):
+     #   y_value = 100
+    #else:
+     #   y_value = 10
+        
+    if(y1 <= (centerY + 100) and y1 >= (centerY - 100)):
+        if(x1 <= (centerX + 80) and x1 >= (centerX - 80)):        
+            return False
+       
+    return True
+
+ 
+
+
+
+
 
 print("Krenuo")
 cv2.namedWindow("preview")
@@ -217,6 +242,8 @@ while rval:
         break    
     if key == 32:          
         print("Poceo sam")   
+        plt.imshow(frame_open, 'gray')
+        print(centerX, centerY)
         #countFingers(max_cont, frame_open)                  
        #print(len(defects))
         #img_input = createInputImage(frame_open, max_cont)               
