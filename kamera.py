@@ -184,15 +184,20 @@ while rval:
         
         
         if (frame_counter == 15):
-            num_of_fingers = countFingers(max_cont)
-            print("num_of_fingers: " + str(num_of_fingers))
-            print("predict iz frame15")
-            img_input = createInputImage(frame_open, max_cont)               
-            my_Predict(loaded_model, img_input)
+            new_num = countFingers(max_cont)
+            print("15new_num: " + str(new_num))
+            if (num_of_fingers != new_num):  #predict radi samo kad ima razlike
+                print("predict iz frame15")
+                img_input = createInputImage(frame_open, max_cont)               
+                my_Predict(loaded_model, img_input)
+            
+            num_of_fingers = new_num
+            print("15num_of_fingers: " + str(num_of_fingers))
+            
 
         elif (frame_counter == 30):
             new_num_of_fingers = countFingers(max_cont)
-            print("new_num of fingers: " + str(new_num_of_fingers))
+            print("30new_num of fingers: " + str(new_num_of_fingers))
             equal = compareNumOfFingers(num_of_fingers, new_num_of_fingers)
             frame_counter = 0
             if (not equal):
