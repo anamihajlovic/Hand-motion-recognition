@@ -57,21 +57,16 @@ def createInputImage(frame, max_cont) :
         data[0, k] = np.mean(img_array[0, k*100:100*(k+1)])    
     return data
 
-def my_Predict(model, img):        
+def my_Predict(model, img_input):        
     t = loaded_model.predict(img_input, verbose = 1)
     result = t.argmax(axis=1)
     print t[0][result], result[0]
 
-
-def compareFrames(oldContour, newContour):    
-    num_old = countFingers(oldContour)
-    num_new = countFingers(newContour)
     
-    print("cmp")
-    print(num_old)
-    print(num_new)
+def compareNumOfFingers(old_num, new_num):
     
-    #return num_old == num_new
+    print("cmp" + str(old_num) + " " + str(new_num))
+    return old_num == new_num
     
 #funckija koja broji prste na frejmu
 def countFingers(frame_cnt):
@@ -122,15 +117,16 @@ def calculateDistance(hulls):
          
     return big_distance, small_distance    
 
-
+print("Krenuo")
 cv2.namedWindow("preview")
 vc = cv2.VideoCapture(0)
 
-loaded_model = readModel()   
+loaded_model = readModel('model3.json', "model3.h5")   
 #win32api.SetCursorPos(( win32api.GetSystemMetrics (0) / 2, win32api.GetSystemMetrics (1) / 2))
 img_array =  np.zeros((1, 50*50), np.uint8)
 
 frame_counter = 0
+num_of_fingers = 0
 
 if vc.isOpened():  # try to get the first frame
     rval, frame = vc.read() 
@@ -167,8 +163,9 @@ while rval:
  
     max_area = 100
     cont_index = 0
-    
-    if(len(contours) != 0) :    
+   
+    if(len(contours) != 0) :   
+        old_frame_cnt = contours[0]
         for i in range(len(contours)) :
             c = contours[i]
             area = cv2.contourArea(c)            
@@ -185,14 +182,27 @@ while rval:
                                     
         #my_moveMouse(centerX * ratioX, centerY * ratioY)  
         
-        if (frame_counter == 15):            
-            old_frame_cnt = max_cont              
-            
-        elif(frame_counter == 30):                          
-            compareFrames(old_frame_cnt, max_cont)
+        
+        if (frame_counter == 15):
+            num_of_fingers = countFingers(max_cont)
+            print("num_of_fingers: " + str(num_of_fingers))
+            print("predict iz frame15")
+            img_input = createInputImage(frame_open, max_cont)               
+            my_Predict(loaded_model, img_input)
+
+        elif (frame_counter == 30):
+            new_num_of_fingers = countFingers(max_cont)
+            print("new_num of fingers: " + str(new_num_of_fingers))
+            equal = compareNumOfFingers(num_of_fingers, new_num_of_fingers)
             frame_counter = 0
-            old_frame_cnt = max_cont
-       
+            if (not equal):
+                print("predict iz frame30")
+                img_input = createInputImage(frame_open, max_cont)               
+                my_Predict(loaded_model, img_input)
+            
+
+    
+   # print("counter: " + str(frame_counter))
     cv2.imshow("preview", frame_open)         
     rval, frame = vc.read()   
     frame_counter += 1

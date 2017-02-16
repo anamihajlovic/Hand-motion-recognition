@@ -112,14 +112,17 @@ def createModel3(data, trainOut, gestures):
     model.save_weights("model3.h5")
     print("Model je sacuvan u fajl")
 
+
 # ucitavanje modela iz fajla i njegovo kreiranje
-def readModel():   
-    json_file = open('model3.json', 'r')
+def readModel(json_file, h5_file):   
+    json_file = open(json_file, 'r')
+   # json_file = open('model3.json', 'r')
     loaded_model_json = json_file.read()
     json_file.close()
     loaded_model = model_from_json(loaded_model_json)
     # ucitavanje tezina u kreirani model
-    loaded_model.load_weights("model3.h5")
+    loaded_model.load_weights(h5_file)
+    #loaded_model.load_weights("model3.h5")
     print("Ucitan model iz fajla")
 
     # evaluacija ucitanog modela
@@ -189,5 +192,7 @@ def mainFunction():
 
     trainOut = createTrainOut(img_num, len(gestures))    
     #createModel(data, trainOut, gestures)
-    createModel3(data, trainOut, gestures)
+    #createModel3(data, trainOut, gestures)
+    
+    
 
