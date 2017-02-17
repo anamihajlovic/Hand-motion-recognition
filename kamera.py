@@ -63,8 +63,7 @@ def my_Predict(model, img_input):
     print t[0][result], result[0]
     return result[0]
     
-def compareNumOfFingers(old_num, new_num):
-    
+def compareNumOfFingers(old_num, new_num):    
     print("cmp" + str(old_num) + " " + str(new_num))
     return old_num == new_num
     
@@ -74,8 +73,8 @@ def countFingers(frame_cnt):
     hulls = cv2.convexHull(max_cont,returnPoints = True) 
    
     max_distance = findMaxCenterDistance(hulls)
-    big_distance = math.ceil(max_distance / 7)  
-    small_distance = math.ceil(max_distance / 16)      
+    big_distance = math.ceil(max_distance / 4)  
+    small_distance = math.ceil(max_distance / 18)      
  
     k = 0               
     for k in range(hulls.shape[0]): 
@@ -125,13 +124,16 @@ def findMaxCenterDistance(hulls):
 #funkcija koja gleda poziciju pronadjenih tacaka, ukoliko nije odgovarajuca potrebno je preskociti tacku
 def checkCenterPosition(x1, y1, max_distance):
     
-    #if(max_distance >= 200):
-     #   y_value = 100
-    #else:
-     #   y_value = 10
+    if(max_distance >= 150):
+        y_value = 80    
+        x_value = 100
+        print("velika")
+    else:
+        y_value = 30
+        x_value = 40
+        print("mala")
         
-    if(y1 <= (centerY + 100) and y1 >= (centerY - 100)):
-        if(x1 <= (centerX + 80) and x1 >= (centerX - 80)):        
+    if(y1 <= (centerY + y_value) and y1 >= (centerY - y_value) and x1 <= (centerX + x_value) and x1 >= (centerX - x_value)):          
             return False
        
     return True
@@ -259,8 +261,7 @@ while rval:
     if key == 27:  # exit on ESC
         break    
     if key == 8:
-        print("Tu sam")
-        win32api.keybd_event(0x76, 64) #send the MEDIA_PLAY_PAUSE even
+       plt.imshow(frame_open,'gray')
        
     # if (control_counter == 6):
        #     control_counter = 0        
@@ -281,7 +282,7 @@ while rval:
 #            win32api.keybd_event(0xae)
 
             
-        control_counter +=1
+       # control_counter +=1
     
     
 vc.release()
