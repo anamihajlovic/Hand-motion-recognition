@@ -61,7 +61,7 @@ def my_Predict(model, img_input):
     t = loaded_model.predict(img_input, verbose = 1)
     result = t.argmax(axis=1)
     print t[0][result], result[0]
-
+    return result[0]
     
 def compareNumOfFingers(old_num, new_num):
     
@@ -137,12 +137,6 @@ def checkCenterPosition(x1, y1, max_distance):
     return True
 
  
-
-
-
-
-
-print("Krenuo")
 cv2.namedWindow("preview")
 vc = cv2.VideoCapture(0)
 
@@ -152,6 +146,7 @@ img_array =  np.zeros((1, 50*50), np.uint8)
 
 frame_counter = 0
 num_of_fingers = 0
+control_counter = 0
 
 if vc.isOpened():  # try to get the first frame
     rval, frame = vc.read() 
@@ -214,7 +209,9 @@ while rval:
             if (num_of_fingers != new_num):  #predict radi samo kad ima razlike
                 print("predict iz frame15")
                 img_input = createInputImage(frame_open, max_cont)               
-                my_Predict(loaded_model, img_input)
+                predict = my_Predict(loaded_model, img_input)
+                if (predict == 0):
+                    win32api.keybd_event(0xb3, 34) #send the MEDIA_PLAY_PAUSE event
             
             num_of_fingers = new_num
             print("15num_of_fingers: " + str(num_of_fingers))
@@ -228,7 +225,11 @@ while rval:
             if (not equal):
                 print("predict iz frame30")
                 img_input = createInputImage(frame_open, max_cont)               
-                my_Predict(loaded_model, img_input)
+                predict = my_Predict(loaded_model, img_input)
+                if (predict == 0):
+                    win32api.keybd_event(0xb3, 34) #send the MEDIA_PLAY_PAUSE event
+
+                
             
 
     
@@ -240,10 +241,27 @@ while rval:
     key = cv2.waitKey(20)
     if key == 27:  # exit on ESC
         break    
-    if key == 32:          
+    if key == 32:
+        if (control_counter == 6):
+            control_counter = 0        
         print("Poceo sam")   
-        plt.imshow(frame_open, 'gray')
-        print(centerX, centerY)
+        #plt.imshow(frame_open, 'gray')
+        #print(centerX, centerY)
+        if (control_counter == 0):
+            win32api.keybd_event(0xb3, 34) #send the MEDIA_PLAY_PAUSE event
+        elif (control_counter == 1):
+            win32api.keybd_event(0xb3, 34) #send the MEDIA_PLAY_PAUSE event
+        elif (control_counter == 2):
+            win32api.keybd_event(0x20,34) #f4
+#        elif (control_counter == 3):
+#           win32api.keybd_event(0x1b) #javlja gresku kad je samo jedan parametar, ali ja ne znam sta kao drugi da prosledim da bi proradilo
+#        elif (control_counter >3 and control_counter < 5):
+#            win32api.keybd_event(0xaf)
+#        elif (control_counter > 4):
+#            win32api.keybd_event(0xae)
+
+            
+        control_counter +=1
         #countFingers(max_cont, frame_open)                  
        #print(len(defects))
         #img_input = createInputImage(frame_open, max_cont)               
