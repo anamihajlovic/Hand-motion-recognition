@@ -13,7 +13,6 @@ from skimage.morphology import diamond, square, disk
 from skimage.morphology import opening, closing, dilation, erosion
 import win32api
 from testObrada import readModel
-import matplotlib.pyplot as plt
 
 
 
@@ -63,8 +62,7 @@ def my_Predict(model, img_input):
     print t[0][result], result[0]
     return result[0]
     
-def compareNumOfFingers(old_num, new_num):    
-    print("cmp" + str(old_num) + " " + str(new_num))
+def compareNumOfFingers(old_num, new_num):      
     return old_num == new_num
     
 #funckija koja broji prste na frejmu
@@ -115,8 +113,7 @@ def findMaxCenterDistance(hulls):
         center_distance = math.sqrt((centerX-x1)*(centerX-x1) + (centerY-y1)*(centerY-y1))
         if(center_distance > max_center_distance):
             max_center_distance = center_distance  
-     
-    print("distance" + str(max_center_distance)) 
+        
     return max_center_distance
 
 
@@ -126,12 +123,10 @@ def checkCenterPosition(x1, y1, max_distance):
     
     if(max_distance >= 150):
         y_value = 80    
-        x_value = 100
-        print("velika")
+        x_value = 100       
     else:
         y_value = 30
-        x_value = 40
-        print("mala")
+        x_value = 40       
         
     if(y1 <= (centerY + y_value) and y1 >= (centerY - y_value) and x1 <= (centerX + x_value) and x1 >= (centerX - x_value)):          
             return False
@@ -140,6 +135,7 @@ def checkCenterPosition(x1, y1, max_distance):
 
  
 cv2.namedWindow("preview")
+cv2.namedWindow("original")
 vc = cv2.VideoCapture(0)
 
 loaded_model = readModel('model3.json', "model3.h5")   
@@ -207,9 +203,8 @@ while rval:
         
         if (frame_counter == 15):
             new_num = countFingers(max_cont)
-            print("15new_num: " + str(new_num))
-            if (num_of_fingers != new_num):  #predict radi samo kad ima razlike
-                print("predict iz frame15")
+            
+            if (num_of_fingers != new_num):  #predict radi samo kad ima razlike                
                 img_input = createInputImage(frame_open, max_cont)               
                 predict = my_Predict(loaded_model, img_input)
                 if (predict == 0):                     
@@ -224,13 +219,11 @@ while rval:
                     #F8 = volume down
                     win32api.keybd_event(0x77, 66)
             
-            num_of_fingers = new_num
-            print("15num_of_fingers: " + str(num_of_fingers))
+            num_of_fingers = new_num           
             
 
         elif (frame_counter == 30):
-            new_num_of_fingers = countFingers(max_cont)
-            print("30new_num of fingers: " + str(new_num_of_fingers))
+            new_num_of_fingers = countFingers(max_cont)           
             equal = compareNumOfFingers(num_of_fingers, new_num_of_fingers)
             frame_counter = 0
             if (not equal):
@@ -249,41 +242,18 @@ while rval:
                     #F8 = volume down
                     win32api.keybd_event(0x77, 66)
                 
-            
-
-    
-   # print("counter: " + str(frame_counter))
-    cv2.imshow("preview", frame_open)         
+ 
+    cv2.imshow("preview", frame_open)  
+    cv2.imshow("original", frame)        
     rval, frame = vc.read()   
     frame_counter += 1
  
     key = cv2.waitKey(20)
     if key == 27:  # exit on ESC
         break    
-    if key == 8:
-       plt.imshow(frame_open,'gray')
-       
-    # if (control_counter == 6):
-       #     control_counter = 0        
-       # print("Poceo sam")   
-        #plt.imshow(frame_open, 'gray')
-        #print(centerX, centerY)
-        #if (control_counter == 0):
-         #   win32api.keybd_event(0xb3, 34) #send the MEDIA_PLAY_PAUSE event
-        #elif (control_counter == 1):
-         #   win32api.keybd_event(0xb3, 34) #send the MEDIA_PLAY_PAUSE event
-        #elif (control_counter == 2):
-         #   win32api.keybd_event(0x20,34) #f4
-#        elif (control_counter == 3):
-#           win32api.keybd_event(0x1b) #javlja gresku kad je samo jedan parametar, ali ja ne znam sta kao drugi da prosledim da bi proradilo
-#        elif (control_counter >3 and control_counter < 5):
-#            win32api.keybd_event(0xaf)
-#        elif (control_counter > 4):
-#            win32api.keybd_event(0xae)
-
-            
-       # control_counter +=1
+   
     
     
 vc.release()
 cv2.destroyWindow("preview")
+cv2.destroyWindow("original")
