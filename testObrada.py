@@ -113,6 +113,8 @@ def createModel3(data, trainOut, gestures):
     print("Model je sacuvan u fajl")
 
 
+
+    
 # ucitavanje modela iz fajla i njegovo kreiranje
 def readModel(json_file, h5_file):   
     json_file = open(json_file, 'r')
@@ -190,9 +192,10 @@ def mainFunction():
         
         data[i, :] = row_array
 
-    trainOut = createTrainOut(img_num, len(gestures))    
+    trainOut = createTrainOut(img_num, len(gestures))
     #createModel(data, trainOut, gestures)
     #createModel3(data, trainOut, gestures)
-    
+
+
     
 

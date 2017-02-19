@@ -227,7 +227,6 @@ while rval:
             equal = compareNumOfFingers(num_of_fingers, new_num_of_fingers)
             frame_counter = 0
             if (not equal):
-                print("predict iz frame30")
                 img_input = createInputImage(frame_open, max_cont)               
                 predict = my_Predict(loaded_model, img_input)
                 if (predict == 0):
